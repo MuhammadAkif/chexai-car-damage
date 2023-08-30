@@ -3,3 +3,4 @@ uvicorn
 google-cloud-vision
 pillow
 python-dotenv
+boto3
