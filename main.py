@@ -54,5 +54,5 @@ async def damage_detection(body: dict = Body(...), api_token:str=Depends(get_api
             processed_file_path=damage_detection_in_video(dir_name,file_name,extension)
         
         if processed_file_path!=None:
-            uploaded_s3_link=upload_file_to_s3_bucket(processed_file_path,file_name)
+            uploaded_s3_link=upload_file_to_s3_bucket(processed_file_path,file_name,extension)
         return {"processed_file_path": processed_file_path,"uploaded_s3_link":uploaded_s3_link,"extension":extension}
