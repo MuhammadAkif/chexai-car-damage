@@ -9,8 +9,8 @@ s3_bucket = boto3.client('s3', aws_access_key_id=os.environ['AWS_S3_ACCESS_KEY_I
                       aws_secret_access_key=os.environ['AWS_S3_SECRET_ACCESS_KEY'])
 
 
-def upload_file_to_s3_bucket(file_path, s3_file):
-    s3_file_path="car_damage_detection/"+s3_file
+def upload_file_to_s3_bucket(file_path, s3_file,extension):
+    s3_file_path="car_damage_detection/"+s3_file+extension
     try:
         s3_bucket.upload_file(file_path, os.environ['AWS_S3_BUCKET_NAME'], s3_file_path)
 
