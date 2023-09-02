@@ -7,6 +7,7 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2 import model_zoo
 import numpy as np
+import imageio
 
 cfg=get_cfg()
 cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
@@ -61,8 +62,6 @@ def s3_file_downloader(link,local_file_name,dir_name="s3_files/"):
 
 def damage_predictor(frame):
     alpha=0.3
-    frame_height,frame_width=frame.shape[0],frame.shape[1]
-    frame=cv2.resize(frame,(int(frame_width/2),int(frame_height/2)))
     overlay=frame.copy()
 
     outputs = predictor(frame)
@@ -112,6 +111,8 @@ def damage_detection_in_image(dir_name,file_name,extension):
     processed_image=damage_predictor(image)
     processed_image_path=dir_name+file_name+"_processed"+extension
     cv2.imwrite(processed_image_path,processed_image)
+    if os.path.exists(img_path):
+        os.remove(img_path)
     return processed_image_path
 
 def damage_detection_in_video(dir_name,file_name,extension):
@@ -121,24 +122,26 @@ def damage_detection_in_video(dir_name,file_name,extension):
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     processed_video_path=dir_name+file_name+"_processed"+extension
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(processed_video_path, fourcc, fps, (int(width//2), int(height//2)))
+    writer = imageio.get_writer(processed_video_path, fps=fps)
 
     counter=0
     while (cap.isOpened() == True):
         ret, frame = cap.read()
         if ret == True:
+            frame=cv2.resize(frame,(int(width//2), int(height//2)))
             counter+=1
             if counter%2==0:
                 frame=damage_predictor(frame)
-                out.write(frame)
             else:
-                out.write(frame)
                 pass
+            frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            writer.append_data(frame)
             
         else:
-            out.release()
             cap.release()
+            writer.close()
+            if os.path.exists(video_path):
+                os.remove(video_path)
             break
     
     return processed_video_path
