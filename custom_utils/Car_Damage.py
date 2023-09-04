@@ -222,7 +222,7 @@ def damage_detection_in_video(dir_name,file_name,extension):
     while (cap.isOpened() == True):
         ret, frame = cap.read()
         if ret == True:
-            # frame=cv2.resize(frame,(int(width//2), int(height//2)))
+            frame=cv2.resize(frame,(int(width//3), int(height//3)))
             counter+=1
             if counter%2==0:
                 frame=damage_predictor(frame)
