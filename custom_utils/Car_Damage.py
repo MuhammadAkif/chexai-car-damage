@@ -224,7 +224,7 @@ def damage_detection_in_video(dir_name,file_name,extension):
         if ret == True:
             frame=cv2.resize(frame,(int(width//3), int(height//3)))
             counter+=1
-            if counter%int(fps/5)==0:
+            if counter%10==0:
                 print("processed frame number: ",counter)
                 frame=damage_predictor(frame)
             else:
