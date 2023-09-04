@@ -1,9 +1,9 @@
-from utils.Car_Damage import random_name_generator,s3_file_downloader, damage_detection_in_image,damage_detection_in_video
-from utils.License_Plate import extract_license_plate_number
-from utils.S3_bucket import upload_file_to_s3_bucket
+from custom_utils.Car_Damage import random_name_generator,s3_file_downloader, damage_detection_in_image,damage_detection_in_video
+from custom_utils.License_Plate import extract_license_plate_number
+from custom_utils.S3_bucket import upload_file_to_s3_bucket
 from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from utils.Api_Authentication import get_api_token
+from custom_utils.Api_Authentication import get_api_token
 from dotenv import load_dotenv
 import os
 
