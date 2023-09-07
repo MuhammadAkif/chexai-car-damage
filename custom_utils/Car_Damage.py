@@ -32,12 +32,12 @@ from utils.torch_utils import select_device
 
 
 imgsz = 640
-conf_thres = 0.25
+conf_thres = 0.10
 iou_thres = 0.45
 
 weights = "model/car_damage_detection_v3.pt"
 imgsz = 640
-conf_thres = 0.3
+conf_thres = 0.1
 iou_thres = 0.45
 device = select_device('0')
 print(device)
@@ -45,12 +45,12 @@ print(device)
 stride, model, names, half, old_img_w,old_img_h, old_img_b = load_model(device,weights,imgsz)
 
 classes=['big_dent','small_dent','scratch','spot','car']
-colors=[(229,204,255),(255,102,0),(204,255,255),(255,229,204),(153,204,255)]
+colors=[(0,255,255),(255,255,0),(255,51,255),(51,255,51),(0,0,255)]
 
 def find_car_indexes(lst):
     indices = []
     for i, elem in enumerate(lst):
-        if elem == 4:##### 5 is for car label
+        if elem == 4:##### 4 is for car label
             indices.append(i)
     return indices
 
@@ -89,9 +89,7 @@ def damage_predictor(frame):
     alpha=0.3
     overlay=frame.copy()
     global old_img_b, old_img_h, old_img_w
-    rec_thickness = int(min(frame.shape[0], frame.shape[1]) * 0.01)
-    max_text_length = 10
-    text_scale_factor = 0.02
+    tl = 3 or round(0.002 * (img.shape[0] + frame.shape[1]) / 2) + 1  # line/font thickness
 
     ### This block is for detectron2 model
     # outputs = predictor(frame)
@@ -151,17 +149,24 @@ def damage_predictor(frame):
                     
                     car_x1,car_y1,car_x2,car_y2=car_bbox
                     car_x1,car_y1,car_x2,car_y2=int(car_x1),int(car_y1),int(car_x2),int(car_y2)
-                    frame=cv2.rectangle(frame, (car_x1,car_y1), (car_x2, car_y2), (0,0,255), rec_thickness)
-                    text_size = min(frame.shape[1] / 1000, frame.shape[1] / (len("car") * max_text_length) * text_scale_factor)
-                    frame=cv2.putText(frame,"car",(car_x1+4,car_y1+4),0,text_size,(0,0,0),rec_thickness)
+                    cv2.rectangle(frame, (car_x1,car_y1), (car_x2, car_y2), (0,0,255), thickness=tl, lineType=cv2.LINE_AA)
+                    tf = max(tl - 1, 1)  # font thickness
+                    t_size = cv2.getTextSize("car", 0, fontScale=tl / 3, thickness=tf)[0]
+                    c2 = car_x1 + t_size[0], car_y1 - t_size[1] - 3
+                    cv2.rectangle(frame, (car_x1,car_y1), c2, colors[-1], -1, lineType=cv2.LINE_AA)
+                    cv2.putText(frame,"car",(car_x1,car_y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
 
                     for box,class_ in zip(bboxes,pred_classes):
+                        tf = max(tl - 1, 1)  # font thickness
+                        t_size = cv2.getTextSize(classes[int(class_)], 0, fontScale=tl / 3, thickness=tf)[0]
+                        
                         x1,y1,x2,y2=box
+                        c2 = x1 + t_size[0], y1 - t_size[1] - 3
                         if x1 > car_x1 and x2 < car_x2 and y1 > car_y1 and y2 < car_y2:
                             x1,y1,x2,y2=int(x1),int(y1),int(x2),int(y2)
-                            overlay=cv2.rectangle(overlay, (x1,y1), (x2, y2), colors[int(class_)], -1)
-                            text_size = min(frame.shape[1] / 1000, frame.shape[1] / (len(classes[int(class_)]) * max_text_length) * text_scale_factor)
-                            frame=cv2.putText(frame,classes[int(class_)],(x1+4,y1+4),0,text_size,(0,0,0),rec_thickness)
+                            cv2.rectangle(frame, (x1,y1), (x2, y2), colors[int(class_)], thickness=tl, lineType=cv2.LINE_AA)
+                            cv2.rectangle(frame, (x1,y1), c2, colors[int(class_)], -1, lineType=cv2.LINE_AA)
+                            cv2.putText(frame,classes[int(class_)],(x1,y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
     frame=cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
     return frame
 
@@ -222,13 +227,14 @@ def damage_detection_in_video(dir_name,file_name,extension):
     while (cap.isOpened() == True):
         ret, frame = cap.read()
         if ret == True:
-            frame=cv2.resize(frame,(int(width//3), int(height//3)))
+            # frame=cv2.resize(frame,(int(width//3), int(height//3)))
             counter+=1
-            if counter%10==0:
-                print("processed frame number: ",counter)
-                frame=damage_predictor(frame)
-            else:
-                pass
+            frame=damage_predictor(frame)
+            # if counter/1==0:
+            #     print("processed frame number: ",counter)
+            #     frame=damage_predictor(frame)
+            # else:
+            #     pass
             frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             writer.append_data(frame)
             
