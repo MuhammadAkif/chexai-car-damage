@@ -227,14 +227,14 @@ def damage_detection_in_video(dir_name,file_name,extension):
     while (cap.isOpened() == True):
         ret, frame = cap.read()
         if ret == True:
-            # frame=cv2.resize(frame,(int(width//3), int(height//3)))
+            frame=cv2.resize(frame,(int(width/2), int(height/2)))
             counter+=1
-            frame=damage_predictor(frame)
-            # if counter/1==0:
-            #     print("processed frame number: ",counter)
-            #     frame=damage_predictor(frame)
-            # else:
-            #     pass
+            # frame=damage_predictor(frame)
+            if counter%2==0:
+                # print("processed frame number: ",counter)
+                frame=damage_predictor(frame)
+            else:
+                pass
             frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             writer.append_data(frame)
             
