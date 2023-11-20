@@ -44,7 +44,7 @@ print(device)
 ### load yolov7 model ###
 stride, model, names, half, old_img_w,old_img_h, old_img_b = load_model(device,weights,imgsz)
 
-classes=['big_dent','small_dent','scratch','spot','car']
+classes=['check_for_dent','check_for_dent','check_for_scratch','check_for_spot','vehicle_body']
 colors=[(0,255,255),(255,255,0),(255,51,255),(51,255,51),(0,0,255)]
 
 def find_car_indexes(lst):
@@ -90,6 +90,7 @@ def damage_predictor(frame):
     overlay=frame.copy()
     global old_img_b, old_img_h, old_img_w
     tl = 3 or round(0.002 * (img.shape[0] + frame.shape[1]) / 2) + 1  # line/font thickness
+    big_dent_count,scratch_cont,spot_count=0,0,0
 
     ### This block is for detectron2 model
     # outputs = predictor(frame)
@@ -151,10 +152,10 @@ def damage_predictor(frame):
                     car_x1,car_y1,car_x2,car_y2=int(car_x1),int(car_y1),int(car_x2),int(car_y2)
                     cv2.rectangle(frame, (car_x1,car_y1), (car_x2, car_y2), (0,0,255), thickness=tl, lineType=cv2.LINE_AA)
                     tf = max(tl - 1, 1)  # font thickness
-                    t_size = cv2.getTextSize("car", 0, fontScale=tl / 3, thickness=tf)[0]
+                    t_size = cv2.getTextSize("vehicle_body", 0, fontScale=tl / 3, thickness=tf)[0]
                     c2 = car_x1 + t_size[0], car_y1 - t_size[1] - 3
                     cv2.rectangle(frame, (car_x1,car_y1), c2, colors[-1], -1, lineType=cv2.LINE_AA)
-                    cv2.putText(frame,"car",(car_x1,car_y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
+                    cv2.putText(frame,"vehicle_body",(car_x1,car_y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
 
                     for box,class_ in zip(bboxes,pred_classes):
                         tf = max(tl - 1, 1)  # font thickness
@@ -167,8 +168,29 @@ def damage_predictor(frame):
                             cv2.rectangle(frame, (x1,y1), (x2, y2), colors[int(class_)], thickness=tl, lineType=cv2.LINE_AA)
                             cv2.rectangle(frame, (x1,y1), c2, colors[int(class_)], -1, lineType=cv2.LINE_AA)
                             cv2.putText(frame,classes[int(class_)],(x1,y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
+
+                            if classes[int(class_)]=="check_for_dent":
+                                big_dent_count+=1
+                            elif classes[int(class_)]=="check_for_scratch":
+                                scratch_cont+=1
+                            elif classes[int(class_)]=="check_for_spot":
+                                spot_count+=1
+    message=""                        
+    if big_dent_count==0 and scratch_cont==0 and spot_count==0:
+        message=""
+    else:
+        list_counter=[big_dent_count,scratch_cont,spot_count]
+        for i,counter in enumerate(list_counter):
+            print(i,": ",counter)
+            if counter>0 and i==0:
+                message+=str(counter)+" dent detected"
+            elif counter>0 and i==1:
+                message+=" "+str(counter)+" scratch detected"
+            elif counter>0 and i==2:
+                message+=" "+str(counter)+" spot detected"
+    
     frame=cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
-    return frame
+    return frame,message
 
 
 
@@ -207,12 +229,12 @@ def damage_predictor(frame):
 def damage_detection_in_image(dir_name,file_name,extension):
     img_path=dir_name+file_name+extension
     image=cv2.imread(img_path)
-    processed_image=damage_predictor(image)
+    processed_image,message=damage_predictor(image)
     processed_image_path=dir_name+file_name+"_processed"+extension
     cv2.imwrite(processed_image_path,processed_image)
     if os.path.exists(img_path):
         os.remove(img_path)
-    return processed_image_path
+    return processed_image_path,message
 
 def damage_detection_in_video(dir_name,file_name,extension):
     video_path=dir_name+file_name+extension
@@ -232,7 +254,7 @@ def damage_detection_in_video(dir_name,file_name,extension):
             # frame=damage_predictor(frame)
             if counter%2==0:
                 # print("processed frame number: ",counter)
-                frame=damage_predictor(frame)
+                frame,message=damage_predictor(frame)
             else:
                 pass
             frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
@@ -245,5 +267,6 @@ def damage_detection_in_video(dir_name,file_name,extension):
                 os.remove(video_path)
             break
     
-    return processed_video_path
+    message=""
+    return processed_video_path,message
 # cv2.destroyAllWindows()
