@@ -41,6 +41,7 @@ conf_thres = 0.1
 iou_thres = 0.45
 device = select_device('0')
 print(device)
+damage_rectangle = []
 ### load yolov7 model ###
 stride, model, names, half, old_img_w,old_img_h, old_img_b = load_model(device,weights,imgsz)
 
@@ -168,7 +169,16 @@ def damage_predictor(frame):
                             cv2.rectangle(frame, (x1,y1), (x2, y2), colors[int(class_)], thickness=tl, lineType=cv2.LINE_AA)
                             cv2.rectangle(frame, (x1,y1), c2, colors[int(class_)], -1, lineType=cv2.LINE_AA)
                             cv2.putText(frame,classes[int(class_)],(x1,y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
-
+                            # My Changes
+                            damage_rectangle.append({
+                                "damageName": classes[int(class_)],
+                                "damageRectangle": {
+                                "x": (x1), 
+                                "y": (y1),
+                                "height": (y2 - y1),
+                                "width": (x2 - x1)
+                                }
+                            })
                             if classes[int(class_)]=="check_for_dent":
                                 big_dent_count+=1
                             elif classes[int(class_)]=="check_for_scratch":
@@ -234,7 +244,7 @@ def damage_detection_in_image(dir_name,file_name,extension):
     cv2.imwrite(processed_image_path,processed_image)
     if os.path.exists(img_path):
         os.remove(img_path)
-    return processed_image_path,message
+    return processed_image_path,message,damage_rectangle
 
 def damage_detection_in_video(dir_name,file_name,extension):
     video_path=dir_name+file_name+extension
