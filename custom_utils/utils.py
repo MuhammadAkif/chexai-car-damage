@@ -21,8 +21,8 @@ def load_model(device,weights,imgsz):
     ###### infrence ####
     if device.type != 'cpu':
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
-        old_img_w = old_img_h = imgsz
-        old_img_b = 1
+    old_img_w = old_img_h = imgsz
+    old_img_b = 1
 
     return stride, model, names, half ,old_img_w,old_img_h, old_img_b
 
