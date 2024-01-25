@@ -41,7 +41,6 @@ conf_thres = 0.1
 iou_thres = 0.45
 device = select_device('0')
 print(device)
-damage_rectangle = []
 ### load yolov7 model ###
 stride, model, names, half, old_img_w,old_img_h, old_img_b = load_model(device,weights,imgsz)
 
@@ -88,6 +87,7 @@ def s3_file_downloader(link,local_file_name,dir_name="s3_files/"):
 
 def damage_predictor(frame):
     alpha=0.3
+    damage_rectangle = []
     overlay=frame.copy()
     global old_img_b, old_img_h, old_img_w
     tl = 3 or round(0.002 * (img.shape[0] + frame.shape[1]) / 2) + 1  # line/font thickness
@@ -198,9 +198,8 @@ def damage_predictor(frame):
                 message+=" "+str(counter)+" scratch detected"
             elif counter>0 and i==2:
                 message+=" "+str(counter)+" spot detected"
-    
     frame=cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
-    return frame,message
+    return frame,message,damage_rectangle
 
 
 
@@ -239,7 +238,7 @@ def damage_predictor(frame):
 def damage_detection_in_image(dir_name,file_name,extension):
     img_path=dir_name+file_name+extension
     image=cv2.imread(img_path)
-    processed_image,message=damage_predictor(image)
+    processed_image,message,damage_rectangle=damage_predictor(image)
     processed_image_path=dir_name+file_name+"_processed"+extension
     cv2.imwrite(processed_image_path,processed_image)
     if os.path.exists(img_path):
