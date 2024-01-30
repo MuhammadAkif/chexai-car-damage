@@ -8,7 +8,7 @@ import imageio
 import cv2
 import torch
 import numpy as np
-
+from collections import Counter
 from utils.general import non_max_suppression, scale_coords
 from custom_utils.utils import img_preprocessing, load_model
 from utils.torch_utils import select_device
@@ -217,7 +217,6 @@ def damage_predictor_for_video(frame,frame_count,threshold,fps):
     pred, preprocessed_img = model_prediction(frame)
 
     raw_detection = np.empty((0,6), float) #### for tracker define raw detection
-    # raw_detection2 = np.empty((0,6), float) #### for tracker define raw detection
 
     # Process detections
     for i, det in enumerate(pred):
@@ -300,6 +299,10 @@ def damage_predictor_for_video(frame,frame_count,threshold,fps):
                             if frame_count <= detection_info['first_frame'] + fps:
                                 # Increment count if within the next fps frames
                                 detection_info['count'] += 1
+                        ####  Ploting ###
+                        cv2.rectangle(frame, (x - 1, y), (w, h),(0,0,255), tl)
+                        cv2.putText(frame,("id: " + str(id)),(x+2,y-4),0,0.8, (0,0,255),2)
+                        cv2.putText(frame,detected_class,(w-2,y-4),0,tl/3, (0,0,255),tf)
 
                     # Check and add to main_detected_objects after the fps frame window
                     for id, detection_info in list(recent_detections.items()):
@@ -315,60 +318,7 @@ def damage_predictor_for_video(frame,frame_count,threshold,fps):
                             
                             # Remove ID from recent_detections as it's outside the fps window
                             del recent_detections[id]
-                        # # Ensure class exists in detection_counts
-                        # if detected_class not in detection_counts:
-                        #     detection_counts[detected_class] = {}
 
-                        # # Increment the count for this id in the specific class
-                        # if id in detection_counts[detected_class]:
-                        #     detection_counts[detected_class][id] += 1
-                        # else:
-                        #     detection_counts[detected_class][id] = 1
-
-                        # # Check if this id in the specific class has met the threshold
-                        # if detection_counts[detected_class][id] >= threshold:
-                        #     # Add to main detected objects list for this class if not already added
-                        #     if id not in [obj['id'] for obj in main_detected_objects[detected_class]]:
-                        #         main_detected_objects[detected_class].append({"id": id, "class": detected_class})
-
-
-                        ####  Ploting ###
-                        cv2.rectangle(frame, (x - 1, y), (w, h),(0,0,255), tl)
-                        cv2.putText(frame,("id: " + str(id)),(x+2,y-4),0,0.8, (0,0,255),2)
-                        cv2.putText(frame,detected_class,(w-2,y-4),0,tl/3, (0,0,255),tf)
-                            # cv2.rectangle(frame, (x1,y1), (x2, y2), colors[int(class_)], thickness=tl, lineType=cv2.LINE_AA)
-                            # cv2.rectangle(frame, (x1,y1), c2, colors[int(class_)], -1, lineType=cv2.LINE_AA)
-                            # cv2.putText(frame,classes[int(class_)],(x1,y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
-                            
-                            # # My Changes
-                            # damage_rectangle.append({
-                            #     "damageName": classes[int(class_)],
-                            #     "damageRectangle": {
-                            #     "x": (x1), 
-                            #     "y": (y1),
-                            #     "height": (y2 - y1),
-                            #     "width": (x2 - x1)
-                            #     }
-                            # })
-                            # if classes[int(class_)]=="check_for_dent":
-                            #     big_dent_count+=1
-                            # elif classes[int(class_)]=="check_for_scratch":
-                            #     scratch_cont+=1
-                            # elif classes[int(class_)]=="check_for_spot":
-                            #     spot_count+=1
-    # message=""                        
-    # if big_dent_count==0 and scratch_cont==0 and spot_count==0:
-    #     message=""
-    # else:
-    #     list_counter=[big_dent_count,scratch_cont,spot_count]
-    #     for i,counter in enumerate(list_counter):
-    #         print(i,": ",counter)
-    #         if counter>0 and i==0:
-    #             message+=str(counter)+" dent detected"
-    #         elif counter>0 and i==1:
-    #             message+=" "+str(counter)+" scratch detected"
-    #         elif counter>0 and i==2:
-    #             message+=" "+str(counter)+" spot detected"
     frame=cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
     return frame
 
@@ -378,12 +328,14 @@ def damage_predictor_for_video(frame,frame_count,threshold,fps):
 def damage_detection_in_image(dir_name,file_name,extension):
     img_path=dir_name+file_name+extension
     image=cv2.imread(img_path)
+    height,width,_=image.shape
+    original_image_info = {"OrgImgHeight":height,"OrgImgWidth":width}
     processed_image,message,damage_rectangle=damage_predictor_for_image(image)
     processed_image_path=dir_name+file_name+"_processed"+extension
-    cv2.imwrite(processed_image_path,processed_image)
+    # cv2.imwrite(processed_image_path,processed_image)
     if os.path.exists(img_path):
         os.remove(img_path)
-    return processed_image_path,message,damage_rectangle
+    return processed_image_path,message,damage_rectangle,original_image_info
 
 
 
@@ -404,21 +356,33 @@ def damage_detection_in_video(dir_name,file_name,extension):
         if ret == True:
             # frame=cv2.resize(frame,(int(width/2), int(height/2)))
             frame_count+=1
-            frame=damage_predictor_for_video(frame,frame_count,threshold,fps)
-            # if counter%2==0:
-            #     # print("processed frame number: ",counter)
-            #     frame,message=damage_predictor_for_video(frame)
-            # else:
-            #     pass
-            frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-            writer.append_data(frame)
+            # frame=damage_predictor_for_video(frame,frame_count,threshold,fps)
+            if frame_count%2==0:
+                # print("processed frame number: ",counter)
+                frame=damage_predictor_for_video(frame,frame_count,threshold,fps)
+                frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+                writer.append_data(frame)
+            else:
+                pass
+            
             
         else:
             cap.release()
             writer.close()
-            # if os.path.exists(video_path):
-                # os.remove(video_path)
+            if os.path.exists(video_path):
+                os.remove(video_path)
             break
-    print("main_detected_objects: ",main_detected_objects)
-    message=""
-    return processed_video_path,message
+    class_counts = Counter(obj['class'] for obj in main_detected_objects if obj['class'] != 'vehicle_body')
+
+    # Construct the message
+    messages = []
+    for class_type, count in class_counts.items():
+        if count > 0:
+            item = f"{count} {class_type.replace('check_for_', '')}{'s' if count > 1 else ''} detected"
+            messages.append(item)
+
+    final_message = ', '.join(messages)
+
+    if not final_message:
+        final_message = "No damages detected."
+    return processed_video_path,final_message
