@@ -49,11 +49,12 @@ async def damage_detection(body: dict = Body(...), api_token:str=Depends(get_api
     if s3_file_downloader(s3_url,file_name+extension):
         processed_file_path=None
         if extension.lower()==".jpg":
-            processed_file_path,message,damage_rectangle=damage_detection_in_image(dir_name,file_name,extension)
-        elif extension.lower()==".mp4":
-            processed_file_path,message=damage_detection_in_video(dir_name,file_name,extension)
+            processed_file_path,message,damage_rectangle,original_img_info=damage_detection_in_image(dir_name,file_name,extension)
+            return {"image_s3_link":s3_url,"extension":extension,"message":message,"org_img_info":original_img_info,"damages":damage_rectangle}
         
-        if processed_file_path!=None:
-            uploaded_s3_link=upload_file_to_s3_bucket(processed_file_path,file_name,extension)
-            ## add comments
-        return {"image_s3_link":s3_url,"extension":extension,"message":message,"damages":damage_rectangle}
+        elif extension.lower()==".mp4":
+            processed_file_path,message=damage_detection_in_video(dir_name, file_name ,extension)
+    
+            if processed_file_path!=None:
+                uploaded_s3_link=upload_file_to_s3_bucket(processed_file_path,file_name,extension)
+            return {"processed_file_path":file_name+extension,"uploaded_s3_link":uploaded_s3_link,"extension":extension,"message":message}
