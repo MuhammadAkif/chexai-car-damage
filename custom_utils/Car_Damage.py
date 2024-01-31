@@ -341,6 +341,11 @@ def damage_detection_in_image(dir_name,file_name,extension):
 
 
 def damage_detection_in_video(dir_name,file_name,extension):
+    global recent_detections, main_detected_objects, added_objects
+    recent_detections={}
+    main_detected_objects = []  # Main detected objects list
+    added_objects = set()
+    
     video_path=dir_name+file_name+extension
     cap = cv2.VideoCapture(video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
