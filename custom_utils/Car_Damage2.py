@@ -332,7 +332,7 @@ def damage_detection_in_image2(dir_name,file_name,extension):
     original_image_info = {"OrgImgHeight":height,"OrgImgWidth":width}
     processed_image,message,damage_rectangle=damage_predictor_for_image(image)
     processed_image_path=dir_name+file_name+"_processed"+extension
-    # cv2.imwrite(processed_image_path,processed_image)
+    cv2.imwrite(processed_image_path,processed_image)
     if os.path.exists(img_path):
         os.remove(img_path)
     return processed_image_path,message,damage_rectangle,original_image_info
