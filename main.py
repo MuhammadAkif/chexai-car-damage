@@ -6,9 +6,23 @@ from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from custom_utils.Api_Authentication import get_api_token
 from dotenv import load_dotenv
+from openai import OpenAI
+from typing import List
+from pydantic import BaseModel, Field
+import json
 import os
 
 load_dotenv()
+
+
+client = OpenAI(api_key=os.environ['OPEN_AI_KEY'])
+
+
+class ChatRequest(BaseModel):
+    model: str = "gpt-4-turbo"
+    images_link: List
+    image_side: str
+
 
 app = FastAPI()
 app.add_middleware(
@@ -19,7 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#################################### Start License plate number extraction endpoint ###########################################
+################################### Start License plate number extraction endpoint ###########################################
 @app.post("/license-plate-number-extraction/")
 async def read_text_from_image(image_data: dict = Body(...), api_token:str=Depends(get_api_token)):
     status=False
@@ -80,3 +94,81 @@ async def damage_detection(body: dict = Body(...), api_token:str=Depends(get_api
             if processed_file_path!=None:
                 uploaded_s3_link=upload_file_to_s3_bucket(processed_file_path,file_name,extension)
             return {"processed_file_path":file_name+extension,"uploaded_s3_link":uploaded_s3_link,"extension":extension,"message":message}
+        
+@app.post("/llm-chat/")
+async def llm_chat_response(chat_request: ChatRequest, api_token:str=Depends(get_api_token)):
+
+    images_link = chat_request.images_link
+    if len(images_link)>2:
+        raise HTTPException(status_code=400, detail="You have provided more than two images for comparison.")
+    
+    print(images_link[0])
+    if len(images_link)==1:
+        response = client.chat.completions.create(
+        model = chat_request.model,
+        messages=[
+            {
+            "role": "user",
+            "content": [
+                {
+                "type": "text",
+                "text": "I have provided "+chat_request.image_side+" image of the vehicle. Please check the small spots, small dents and big dents on the vehicle body and also suggest the estimated repare cost based on detected damages in dollar and also add one line comment, if any damage detected return in the following json format\
+                    {'small_dents':2/3 , 'small_spots':3/10,'big_dents':0/4 or any detected big dents, 'scratches':1 or 6 or any detected scratches,'cost':50/200, 'comment':'small dents and spots detected but there is no severe damage detected.'}, and if no the simply return {'small_dents':0, 'small_spots':0,'big_dents':0,'scratches':0,'cost':0, 'comment':'There is no damage found.'} and no cost. Please make sure the response should be 100 persent in the json format any there is no any text defore and end.",
+                },
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": images_link[0],
+                },
+                }
+            ],
+            }
+        ],
+        max_tokens=300,
+        )
+
+        data_str=response.choices[0].message.content
+        data_str = data_str.replace("'", '"')
+        try:
+            data_json = json.loads(data_str)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=e)
+        return data_json
+    else:
+        response = client.chat.completions.create(
+        model = chat_request.model,
+        messages=[
+            {
+            "role": "user",
+            "content": [
+                {
+                "type": "text",
+                "text": "I have provided two"+chat_request.image_side+" images of the same vehicle. I want to make comparison of first image with my second new image I want to check if there is any new small spots, small dents and big dents on the vehicle body and also suggest the estimated repare cost based on detected damages in dollar and also add one line comment, if any new damage detected return in the following json format\
+                    {'small_dents':2/3 , 'small_spots':3/10,'big_dents':0/4 or any detected big dents, 'scratches':1 or 6 or any detected scratches,'cost':50/200, 'comment':'small dents and spots detected but there is no severe damage detected.'}, and if no the simply return {'small_dents':0, 'small_spots':0,'big_dents':0,'scratches':0,'cost':0, 'comment':'There is no new damage found.'} and no cost. Please make sure the response should be 100 persent in the json format any there is no any text defore and end.",
+                },
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": images_link[0],
+                },
+                },
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": images_link[1],
+                },
+                }
+                
+            ],
+            }
+        ],
+        max_tokens=300,
+        )
+
+        data_str=response.choices[0].message.content
+        data_str = data_str.replace("'", '"')
+        try:
+            data_json = json.loads(data_str)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=e)
+        return data_json
