@@ -110,10 +110,15 @@ async def llm_chat_response(chat_request: ChatRequest, api_token:str=Depends(get
             {
             "role": "user",
             "content": [
+                # {
+                # "type": "text",
+                # "text": "I have provided "+chat_request.image_side+" image of the vehicle. Please check the small spots, small dents and big dents on the vehicle body and also suggest the estimated repare cost based on detected damages in dollar and also add one line comment, if any damage detected return in the following json format\
+                #     {'small_dents':2/3 , 'small_spots':3/10,'big_dents':0/4 or any detected big dents, 'scratches':1 or 6 or any detected scratches,'cost':50/200, 'comment':'small dents and spots detected but there is no severe damage detected.'}, and if no the simply return {'small_dents':0, 'small_spots':0,'big_dents':0,'scratches':0,'cost':0, 'comment':'There is no damage found.'} and no cost. Please make sure the response should be 100 persent in the json format any there is no any text defore and end.",
+                # },
                 {
                 "type": "text",
-                "text": "I have provided "+chat_request.image_side+" image of the vehicle. Please check the small spots, small dents and big dents on the vehicle body and also suggest the estimated repare cost based on detected damages in dollar and also add one line comment, if any damage detected return in the following json format\
-                    {'small_dents':2/3 , 'small_spots':3/10,'big_dents':0/4 or any detected big dents, 'scratches':1 or 6 or any detected scratches,'cost':50/200, 'comment':'small dents and spots detected but there is no severe damage detected.'}, and if no the simply return {'small_dents':0, 'small_spots':0,'big_dents':0,'scratches':0,'cost':0, 'comment':'There is no damage found.'} and no cost. Please make sure the response should be 100 persent in the json format any there is no any text defore and end.",
+                "text": "I have provided "+chat_request.image_side+" image of the vehicle. Please deeply inspect the whole vehicle if you find any spots, scratches, dents, or any damage and alos focus on small scratches, dent and damages, please write in the comment with locations only 7-8 words and also suggest the expected cost for fixing vehicle and response return in the following json format\
+                    {'cost':50/200, 'comment':'2 scratched and 1 dent on the right door./ 4 spots on front door and scratch on window.'}, and if no the simply return {'cost':0, 'comment':'There is no damage found.'} and no cost. Please make sure the response should be 100 percent in the json format any there is no any text before and after/end.",
                 },
                 {
                 "type": "image_url",
@@ -143,8 +148,8 @@ async def llm_chat_response(chat_request: ChatRequest, api_token:str=Depends(get
             "content": [
                 {
                 "type": "text",
-                "text": "I have provided two"+chat_request.image_side+" images of the same vehicle. I want to make comparison of first image with my second new image I want to check if there is any new small spots, small dents and big dents on the vehicle body and also suggest the estimated repare cost based on detected damages in dollar and also add one line comment, if any new damage detected return in the following json format\
-                    {'small_dents':2/3 , 'small_spots':3/10,'big_dents':0/4 or any detected big dents, 'scratches':1 or 6 or any detected scratches,'cost':50/200, 'comment':'small dents and spots detected but there is no severe damage detected.'}, and if no the simply return {'small_dents':0, 'small_spots':0,'big_dents':0,'scratches':0,'cost':0, 'comment':'There is no new damage found.'} and no cost. Please make sure the response should be 100 persent in the json format any there is no any text defore and end.",
+                "text": "I have provided two "+chat_request.image_side+" image of the same vehicle. One picture is from previously inspected and second image is fresh picture Please deeply inspect the whole two vehicles if you find any NEW spots, scratches, dents, or any damage and also focus on NEW small scratches, dent and damages, please write in the comment with locations only 7-8 words and also suggest the expected cost for fixing vehicle and response return in the following json format\
+                    {'cost':50/200, 'comment':'2 new scratches and 1 new dent on the right door detected./ 4 snew pots on front door and new scratch on window detected.'}, and if no the simply return {'cost':0, 'comment':'There is no new damage found.'} and no cost. Please make sure the response should be 100 percent in the json format any there is no any text before and after/end.",
                 },
                 {
                 "type": "image_url",
