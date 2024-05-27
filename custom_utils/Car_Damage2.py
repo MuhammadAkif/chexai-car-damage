@@ -20,20 +20,20 @@ from byte_tracker_utils.tracker_update import Update_Detections
 tracker = BYTETracker()
 
 
-imgsz = 640
-conf_thres = 0.10
-iou_thres = 0.45
+# weights = "model/car_damage_detection_v3.pt"
+weights = "model/car_damage_detection_v4.pt"
 
-weights = "model/car_damage_detection_v3.pt"
-imgsz = 640
-conf_thres = 0.1
+imgsz = 1280
+conf_thres = 0.15
 iou_thres = 0.45
 device = select_device('0')
 print(device)
 ### load yolov7 model ###
 stride, model, names, half, old_img_w,old_img_h, old_img_b = load_model(device,weights,imgsz)
 
-classes=['check_for_dent','check_for_dent','check_for_scratch','check_for_spot','vehicle_body']
+# classes=['check_for_dent','check_for_dent','check_for_scratch','check_for_spot','vehicle_body']
+classes=['check_for_dent','check_for_scratch','check_for_spot','vehicle_body']
+
 colors=[(0,255,255),(255,255,0),(255,51,255),(51,255,51),(0,0,255)]
 
 
@@ -42,7 +42,7 @@ colors=[(0,255,255),(255,255,0),(255,51,255),(51,255,51),(0,0,255)]
 def find_car_indexes(lst):
     indices = []
     for i, elem in enumerate(lst):
-        if elem == 4:##### 4 is for car label
+        if elem == 3:##### 3l is for car label
             indices.append(i)
     return indices
 
@@ -254,7 +254,7 @@ def damage_predictor_for_video(frame,frame_count,threshold,fps):
                     car_x1,car_y1,car_x2,car_y2=int(car_x1),int(car_y1),int(car_x2),int(car_y2)
 
                     ## update value in raw detection if object detected for tracker
-                    raw_detection = np.concatenate((raw_detection, [[int(car_x1), int(car_y1), int(car_x2), int(car_y2), car_obj['conf_score'], 4]]))
+                    raw_detection = np.concatenate((raw_detection, [[int(car_x1), int(car_y1), int(car_x2), int(car_y2), car_obj['conf_score'], 3]]))
                     
                     # cv2.rectangle(frame, (car_x1,car_y1), (car_x2, car_y2), (0,0,255), thickness=tl, lineType=cv2.LINE_AA)
                     tf = max(tl - 1, 1)  # font thickness
