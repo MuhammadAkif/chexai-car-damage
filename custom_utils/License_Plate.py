@@ -20,7 +20,7 @@ def extract_license_plate_number(image_url):
     "client_x509_cert_url": os.environ['GOOGLE_CLIENT_X509_CERT_URL'],
     "universe_domain": os.environ['GOOGLE_UNIVERSE_DOMAIN']
     }
-
+    
     client = vision.ImageAnnotatorClient.from_service_account_info(credentials_json)
 
     # Download the image from the URL
@@ -49,10 +49,22 @@ def extract_license_plate_number(image_url):
 
     detected_text = []
     for text in response.text_annotations:
-        words = text.description.strip().split()
-        for word in words:
-            if len(word) == 7 and re.match(r'^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{7}$', word):
-                detected_text.append(word)
+        print("text: ",text)
+        word = text.description
+        parts = word.split('\n')
+        potential_words = []
+        
+        if len(parts) == 1 and parts[0] == "":
+            potential_words = [word]
+        else:
+            potential_words = parts  # Add all parts from the split directly
+        
+        # Check each potential word
+        for word in potential_words:
+
+            word=word.replace(" ","")
+            if len(word) == 7 and re.match(r'^[a-zA-Z0-9]{7}$', word) and not word.isdigit():
+                    detected_text.append(word)
 
     if not detected_text:
         detail="plateNumber not found in the image."
