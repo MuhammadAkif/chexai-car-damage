@@ -46,31 +46,13 @@ def extract_license_plate_number(image_url):
         # detail=f"Error detecting text: {response.error.message}"
         # return status,plate_number,detail
         raise HTTPException(status_code=500, detail=f"Error detecting text: {response.error.message}")
-
-    detected_text = []
+    
+    number_plate_pattern = re.compile(r'\d+-[A-Za-z0-9]+-\d+')
     for text in response.text_annotations:
-        print("text: ",text)
-        word = text.description
-        parts = word.split('\n')
-        potential_words = []
-        
-        if len(parts) == 1 and parts[0] == "":
-            potential_words = [word]
+        print("word: ",text.description)
+        match = number_plate_pattern.search(text.description)
+        if match:
+            print("matched: ",match.group()) 
+            return True,match.group(),"successfully"
         else:
-            potential_words = parts  # Add all parts from the split directly
-        
-        # Check each potential word
-        for word in potential_words:
-
-            word=word.replace(" ","")
-            if len(word) == 7 and re.match(r'^[a-zA-Z0-9]{7}$', word) and not word.isdigit():
-                    detected_text.append(word)
-
-    if not detected_text:
-        detail="plateNumber not found in the image."
-        return status,plate_number,detail
-    plate_number=detected_text[0].upper()
-    status=True
-        # raise HTTPException(status_code=404, detail={"message":"plateNumber not found in the image."})
-
-    return status,plate_number,detail
+            return False,None,"plateNumber not found in the image."
