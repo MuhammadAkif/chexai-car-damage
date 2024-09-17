@@ -1,8 +1,11 @@
 fastapi
+bytetracker
 uvicorn
-google-cloud-vision
 pillow
 python-dotenv
 boto3
-imageio[ffmpeg]
-openai
+paddleocr
+paddlepaddle
+ultralytics
+onnx
+tensorrt
