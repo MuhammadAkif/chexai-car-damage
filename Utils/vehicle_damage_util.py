@@ -33,7 +33,7 @@ base_dir = "AiModels/"
 model=YOLO(base_dir+os.environ['DAMAGE_MODEL_NAME'])
 conf_thres = 0.15
 
-classes=['check_for_dent','check_for_scratch','vehicle_body']
+classes=['check for dent','check for scratch','vehicle body']
 
 colors=[(0,255,255),(255,255,0),(0,0,255)]
 
@@ -113,12 +113,21 @@ def damage_predictor_for_image(frame):
                         cv2.putText(frame,classes[int(class_)],(x1,y1-2),0,tl / 3,(255,255,255),thickness=tf, lineType=cv2.LINE_AA)
                         # My Changes
                         damage_rectangle.append({
-                            "damageName": classes[int(class_)],
+                            
                             "damageRectangle": {
                             "x": (x1), 
                             "y": (y1),
                             "height": (y2 - y1),
-                            "width": (x2 - x1)
+                            "width": (x2 - x1),
+                            "label": classes[int(class_)],
+                            "byAI": True,
+                            "deleted": False,
+                            "accuracyMatrix": {
+                                "tp": 1,
+                                "fp": 0,
+                                "fn": 0
+                            }
+
                             }
                         })
                         if classes[int(class_)]=="check_for_dent":
