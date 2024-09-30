@@ -130,11 +130,11 @@ def damage_predictor_for_image(frame):
 
                             }
                         })
-                        if classes[int(class_)]=="check_for_dent":
+                        if classes[int(class_)]=="check for dent":
                             big_dent_count+=1
-                        elif classes[int(class_)]=="check_for_scratch":
+                        elif classes[int(class_)]=="check for scratch":
                             scratch_cont+=1
-                        elif classes[int(class_)]=="check_for_spot":
+                        elif classes[int(class_)]=="check for spot":
                             spot_count+=1
     message=""                        
     if big_dent_count==0 and scratch_cont==0 and spot_count==0:
