@@ -41,7 +41,10 @@ def model_prediction(frame):
 
     results = model.predict(frame, conf=conf_thres, imgsz=(640, 640))
 
+    results = model.predict(frame, conf=conf_thres, imgsz=(640, 640))
+
     result = results[0]
+    
     
     
     boxes = result.boxes.xyxy.cpu().numpy().astype(int)
@@ -49,11 +52,14 @@ def model_prediction(frame):
     class_ids = result.boxes.cls.cpu().numpy().astype(int)
 
 
+
     for box, score, class_id in zip(boxes, scores, class_ids):
+        pred_bboxes.append([int(box[0]), int(box[1]), int(box[2]), int(box[3])])
         pred_bboxes.append([int(box[0]), int(box[1]), int(box[2]), int(box[3])])
         pred_classes.append(int(class_id))
         pred_scores.append(round(float(score), 2))
 
+    return pred_bboxes, pred_classes, pred_scores
     return pred_bboxes, pred_classes, pred_scores
 
 
