@@ -12,7 +12,7 @@ def random_name_generator(length=20):
 def find_car_indexes(lst):
     indices = []
     for i, elem in enumerate(lst):
-        if elem == 2:##### 3l is for car label
+        if elem == 0:##### 3l is for car label
             indices.append(i)
     return indices
 
@@ -28,12 +28,12 @@ def calculate_area(bbox):
 def find_biggest_car_bbox(bboxes):
     biggest_bbox = None
     max_area = 0
-    for bbox_dict in bboxes:
-        bbox = bbox_dict["bbox"]  
+    for bbox in bboxes:
+        # bbox = bbox_dict["bbox"]  
         area = calculate_area(bbox)  # calculate car rectangle(bbox) area
         if area > max_area:
             max_area = area
-            biggest_bbox = bbox_dict  # Store the entire dictionary
+            biggest_bbox = bbox  # Store the entire dictionary
     return biggest_bbox
 
 

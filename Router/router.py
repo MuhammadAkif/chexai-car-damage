@@ -25,6 +25,39 @@ async def number_plate_extraction(image_data:InputLicencePlate, api_token:str=De
         raise HTTPException(status_code=500, detail="Backend Issue.")
 
 
+@router.post("/damage-detection/")
+async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_api_token)):
+    dir_name = "s3_files/"
+    s3_url = input.s3_url
+    extension = input.extension
+    file_name = random_name_generator()
+    if s3_file_downloader(s3_url, file_name + extension):
+        processed_file_path = None
+        if extension.lower() == ".jpg":
+            processed_file_path, message, damage_rectangle, original_img_info = damage_detection_in_image2(dir_name, file_name, extension)
+            if processed_file_path is not None:
+                uploaded_s3_link = upload_file(processed_file_path, file_name, extension)
+            return {
+                "image_s3_link": s3_url,
+                "processed_img_s3_link": uploaded_s3_link,
+                "extension": extension,
+                "message": message,
+                "org_img_info": original_img_info,
+                "damages": damage_rectangle
+            }
+        elif extension.lower() == ".mp4":
+            processed_file_path, message, unique_counts = damage_detection_in_video(dir_name, file_name, extension)
+            if processed_file_path is not None:
+                uploaded_s3_link = upload_file(processed_file_path, file_name, extension)
+            return {
+                "processed_file_path": file_name + extension,
+                "uploaded_s3_link": uploaded_s3_link,
+                "extension": extension,
+                "message": message,
+                "unique_counts": unique_counts
+            }
+    raise HTTPException(status_code=400, detail="Failed to process file")
+
 ######### End point for damage detection image/video extraction ########
 @router.post("/damage-detection2/")
 async def damage_detection(input:InputCarDamage, api_token:str=Depends(get_api_token)):
@@ -41,9 +74,3 @@ async def damage_detection(input:InputCarDamage, api_token:str=Depends(get_api_t
                 uploaded_s3_link=upload_file(processed_file_path,file_name,extension)
             return {"image_s3_link":s3_url,"processed_img_s3_link":uploaded_s3_link,"extension":extension,"message":message,"org_img_info":original_img_info,"damages":damage_rectangle}
         
-        # elif extension.lower()==".mp4":
-        #     processed_file_path,message=damage_detection_in_video2(dir_name, file_name ,extension)
-    
-        #     if processed_file_path!=None:
-        #         uploaded_s3_link=upload_file(processed_file_path,file_name,extension)
-        #     return {"processed_file_path":file_name+extension,"uploaded_s3_link":uploaded_s3_link,"extension":extension,"message":message}
