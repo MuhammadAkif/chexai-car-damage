@@ -10,7 +10,7 @@ import os
 base_dir = "AiModels/"
 model = YOLO(base_dir + os.environ['DAMAGE_MODEL_NAME'])
 vehicle_model=YOLO(base_dir + os.environ['VEHICLE_MODEL_NAME'])
-conf_thres = 0.15
+conf_thres = 0.18
 
 # Define the class labels
 classes = ['dent', 'scratch', 'mud']
@@ -52,7 +52,6 @@ def model_prediction(frame):
 
 
     for box, score, class_id in zip(boxes, scores, class_ids):
-        pred_bboxes.append([int(box[0]), int(box[1]), int(box[2]), int(box[3])])
         pred_bboxes.append([int(box[0]), int(box[1]), int(box[2]), int(box[3])])
         pred_classes.append(int(class_id))
         pred_scores.append(round(float(score), 2))
