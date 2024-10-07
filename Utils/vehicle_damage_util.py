@@ -10,7 +10,7 @@ import os
 base_dir = "AiModels/"
 model = YOLO(base_dir + os.environ['DAMAGE_MODEL_NAME'])
 vehicle_model=YOLO(base_dir + os.environ['VEHICLE_MODEL_NAME'])
-conf_thres = 0.17
+conf_thres = 0.15
 
 # Define the class labels
 classes = ['dent', 'scratch', 'mud']
@@ -25,10 +25,8 @@ def vehicle_detection(frame):
     if len(bboxes):
         if len(bboxes) > 1:
             car_bbox = find_biggest_car_bbox(bboxes)
-            print("Multi car_bbox: ", car_bbox)
         elif len(bboxes) == 1:
             car_bbox = bboxes[0]
-            print("single car_bbox: ", car_bbox)
         x1, y1, x2, y2 = car_bbox
         cropped_image = frame[y1:y2, x1:x2]
         return cropped_image, True, car_bbox
@@ -41,9 +39,7 @@ def model_prediction(frame):
     pred_classes = []
     pred_scores = []
 
-    results = model.predict(frame, conf=conf_thres, imgsz=(640, 640))
-
-    results = model.predict(frame, conf=conf_thres, imgsz=(640, 640))
+    results = model.predict(frame, conf=conf_thres)
 
     result = results[0]
     
@@ -61,7 +57,6 @@ def model_prediction(frame):
         pred_classes.append(int(class_id))
         pred_scores.append(round(float(score), 2))
 
-    return pred_bboxes, pred_classes, pred_scores
     return pred_bboxes, pred_classes, pred_scores
 
 
@@ -130,7 +125,9 @@ def damage_predictor_for_image(frame):
 
         frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
         
-        return frame, message, damage_rectangle
+        return frame, message, damage_rectangle, True
+    else:
+        return frame, message, damage_rectangle, False
 
 ########################################### New Function with Non Vehicle condition ########################################################
 
@@ -142,13 +139,15 @@ def damage_detection_in_image2(dir_name, file_name, extension):
     original_image_info = {"OrgImgHeight": height, "OrgImgWidth": width}
     
     # First, detect the vehicle
-    vehicle_image, vehicle_status, vehicle_box = vehicle_detection(image)
+    # vehicle_image, vehicle_status, vehicle_box = vehicle_detection(image)
     
-    if not vehicle_status or vehicle_box is None:
-        message = "Vehicle Not detected"
+    # if not vehicle_status or vehicle_box is None:
+    #     message = "Vehicle Not detected"
+    #     return None, message, [], original_image_info
+    
+    processed_image, message, damage_rectangle, vehicle_det_status= damage_predictor_for_image(image)
+    if not vehicle_det_status:
         return None, message, [], original_image_info
-    
-    processed_image, message, damage_rectangle = damage_predictor_for_image(image)
     processed_image_path = dir_name + file_name + "_processed" + extension
     cv2.imwrite(processed_image_path, processed_image)
     
