@@ -81,7 +81,8 @@ async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_a
                 if processed_file_path is not None:
                     uploaded_s3_link = upload_file(processed_file_path, file_name, extension)
                 else:
-                    message = "No vehicle detected" if not message else message
+                    message = "Vehicle Not detected" if not message else message
+                    uploaded_s3_link = s3_url  # Use the original S3 URL if no processing occurred
 
             # Clean up the downloaded file
             if os.path.exists(dir_name + file_name + extension):
@@ -91,14 +92,16 @@ async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_a
             if processed_file_path and os.path.exists(processed_file_path):
                 os.remove(processed_file_path)
 
-            return {
+            response = {
                 "image_s3_link": s3_url,
-                "processed_img_s3_link": uploaded_s3_link,
+                "processed_img_s3_link": uploaded_s3_link or s3_url,  # Use original URL if uploaded_s3_link is None
                 "extension": extension,
                 "message": message,
                 "org_img_info": original_img_info,
                 "damages": damage_rectangle
             }
+
+            return response
         else:
             raise HTTPException(status_code=400, detail="Failed to download file from S3")
     except Exception as e:
