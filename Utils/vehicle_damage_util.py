@@ -65,6 +65,7 @@ def damage_predictor_for_image(frame):
     overlay = frame.copy()
     tl = 3 or round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
     dent_count, scratch_count, mud_count = 0, 0, 0
+    message = ""
 
     vehicle_image,vehicle_status,vehicle_box=vehicle_detection(frame)
     if vehicle_status:
@@ -114,7 +115,6 @@ def damage_predictor_for_image(frame):
                     mud_count += 1
 
         
-        message = ""
         if dent_count > 0:
             message += f"{dent_count} dent(s) detected. "
         if scratch_count > 0:
