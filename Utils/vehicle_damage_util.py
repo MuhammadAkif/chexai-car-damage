@@ -14,7 +14,7 @@ conf_thres = 0.18
 
 # Define the class labels
 classes = ['dent', 'scratch', 'mud']
-colors = [(0, 255, 255), (255, 255, 0), (0, 0, 255)]
+colors = [(0, 0, 255), (255, 255, 0), (0, 255, 0)]
 
 
 
