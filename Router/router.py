@@ -76,7 +76,7 @@ async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_a
             original_img_info = {}
 
             if extension.lower() == ".jpg":
-                processed_file_path, message, damage_rectangle, original_img_info = damage_detection_in_image2(dir_name, file_name, extension)
+                processed_file_path, message, damage_rectangle, original_img_info,final_status = damage_detection_in_image2(dir_name, file_name, extension)
                 
                 if processed_file_path is not None:
                     uploaded_s3_link = upload_file(processed_file_path, file_name, extension)
@@ -92,11 +92,16 @@ async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_a
             if processed_file_path and os.path.exists(processed_file_path):
                 os.remove(processed_file_path)
 
+            if final_status:
+                final_status='fail'
+            else:
+                final_status='pass'
             response = {
                 "image_s3_link": s3_url,
                 "processed_img_s3_link": uploaded_s3_link or s3_url,  # Use original URL if uploaded_s3_link is None
                 "extension": extension,
                 "message": message,
+                "final_status":final_status,
                 "org_img_info": original_img_info,
                 "damages": damage_rectangle
             }

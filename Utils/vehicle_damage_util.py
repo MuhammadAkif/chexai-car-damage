@@ -66,6 +66,7 @@ def damage_predictor_for_image(frame):
     tl = 3 or round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
     dent_count, scratch_count, mud_count = 0, 0, 0
     message = ""
+    final_staus=False
 
     vehicle_image,vehicle_status,vehicle_box=vehicle_detection(frame)
     if vehicle_status:
@@ -74,6 +75,7 @@ def damage_predictor_for_image(frame):
         bboxes, pred_classes, pred_scores = model_prediction(vehicle_image)
 
         if pred_classes:
+            final_staus=True
             for box, class_id, score in zip(bboxes, pred_classes, pred_scores):
                 x1, y1, x2, y2 = box
                 original_x1 = int(vehicle_x1 + x1)
@@ -124,9 +126,9 @@ def damage_predictor_for_image(frame):
 
         frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
         
-        return frame, message, damage_rectangle, True
+        return frame, message, damage_rectangle, True, final_staus
     else:
-        return frame, message, damage_rectangle, False
+        return frame, message, damage_rectangle, False, final_staus
 
 ########################################### New Function with Non Vehicle condition ########################################################
 
@@ -144,16 +146,16 @@ def damage_detection_in_image2(dir_name, file_name, extension):
     #     message = "Vehicle Not detected"
     #     return None, message, [], original_image_info
     
-    processed_image, message, damage_rectangle, vehicle_det_status= damage_predictor_for_image(image)
+    processed_image, message, damage_rectangle, vehicle_det_status,final_status= damage_predictor_for_image(image)
     if not vehicle_det_status:
-        return None, message, [], original_image_info
+        return None, message, [], original_image_info,final_status
     processed_image_path = dir_name + file_name + "_processed" + extension
     cv2.imwrite(processed_image_path, processed_image)
     
     if os.path.exists(img_path):
         os.remove(img_path)
     
-    return processed_image_path, message, damage_rectangle, original_image_info
+    return processed_image_path, message, damage_rectangle, original_image_info,final_status
 
 
 
