@@ -1,6 +1,6 @@
 import cv2
 import torch
-from bytetracker import BYTETracker
+# from bytetracker import BYTETracker
 from ultralytics import YOLO
 from Utils.util import *
 import numpy as np
@@ -128,6 +128,7 @@ def damage_predictor_for_image(frame):
         
         return frame, message, damage_rectangle, True, final_staus
     else:
+        final_staus=True
         return frame, message, damage_rectangle, False, final_staus
 
 ########################################### New Function with Non Vehicle condition ########################################################
