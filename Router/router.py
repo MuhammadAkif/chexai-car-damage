@@ -1,5 +1,6 @@
 from Utils.licence_plate_util import extract_license_plate_number
 from Utils.night_image_captured import is_night_captured_image
+from Utils.vllm import get_mistral_analysis
 from fastapi import HTTPException, Depends
 from Auth.ApiAuthentication import get_api_token
 from Services.s3_service import *
@@ -36,6 +37,17 @@ async def is_night_image(image_data:InputNightImage, api_token:str=Depends(get_a
     try:
         status= is_night_captured_image(image_url)
         return {"status":status}
+    except HTTPException as exc:
+        raise HTTPException(status_code=500, detail="Backend Issue.")
+
+@router.post("/vllm/")
+async def vllm_analysis(image_data:InputNightImage, api_token:str=Depends(get_api_token)):
+    image_url = image_data.image_url
+    if not image_url:
+        raise HTTPException(status_code=400, detail="Image URL is missing in the request body")
+
+    try:
+        return get_mistral_analysis(image_url)
     except HTTPException as exc:
         raise HTTPException(status_code=500, detail="Backend Issue.")
 

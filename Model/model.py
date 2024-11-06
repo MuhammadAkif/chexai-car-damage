@@ -11,3 +11,6 @@ class InputCarDamage(BaseModel):
 
 class InputNightImage(BaseModel):
     image_url:str
+
+class InputVllm(BaseModel):
+    image_url:str
