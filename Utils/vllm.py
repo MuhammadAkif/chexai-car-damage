@@ -42,7 +42,7 @@ def get_mistral_analysis(s3_url):
                     "type": "text",
                     "text":"""
                         Detect damages from this vehicle image and return a response of any small dents and scratches.
-                        response should be like this {"final_status":pass/fail, "message":"short description only"}."""
+                        response should be like this {"final_status":pass/fail, "message":"short description only"}. Make sure response should be json format by any cost."""
                 },
                 {
                     "type": "image_url",
