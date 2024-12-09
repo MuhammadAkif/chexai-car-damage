@@ -34,8 +34,8 @@ async def extraction_milage(image_data:InputLicencePlate, api_token:str=Depends(
         raise HTTPException(status_code=400, detail="Image URL is missing in the request body")
 
     try:
-        status,plate_number,detail = extract_mileage(image_url)
-        return {"status":status,"plateNumber":plate_number,"detail":detail}
+        status,mileage,detail = extract_mileage(image_url)
+        return {"status":status,"mileage":mileage,"detail":detail}
     except HTTPException as exc:
         raise HTTPException(status_code=500, detail="Backend Issue.")
 
