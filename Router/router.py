@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from Model.model import *
 from Utils.util import *
 from Utils.vehicle_damage_util import *
+from Utils.odometer import *
 
 
 
@@ -22,6 +23,18 @@ async def number_plate_extraction(image_data:InputLicencePlate, api_token:str=De
 
     try:
         status,plate_number,detail = extract_license_plate_number(image_url)
+        return {"status":status,"plateNumber":plate_number,"detail":detail}
+    except HTTPException as exc:
+        raise HTTPException(status_code=500, detail="Backend Issue.")
+
+@router.post("/mileage-extraction/")
+async def extraction_milage(image_data:InputLicencePlate, api_token:str=Depends(get_api_token)):
+    image_url = image_data.image_url
+    if not image_url:
+        raise HTTPException(status_code=400, detail="Image URL is missing in the request body")
+
+    try:
+        status,plate_number,detail = extract_mileage(image_url)
         return {"status":status,"plateNumber":plate_number,"detail":detail}
     except HTTPException as exc:
         raise HTTPException(status_code=500, detail="Backend Issue.")
