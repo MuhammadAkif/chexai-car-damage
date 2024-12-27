@@ -31,7 +31,15 @@ def extract_mileage(image_url):
 
     try:
 
-        mileage_pattern=re.compile(r'\b\d+(\.\d+)?\s*(?:mi|mi\s|mi\n)\b', re.IGNORECASE)
+        # mileage_pattern=re.compile(r'\b\d+(\.\d+)?\s*(?:mi|mi\s|mi\n)\b', re.IGNORECASE)
+        mileage_pattern = re.compile(
+            r"""
+            \b\d+(\.\d+)?\s*(?:mi|miles|ml)\b |   # Matches patterns like "46950.2 ml"
+            (?:\d+)(?=\s*miles) |                # Matches numbers followed by "miles"
+            (?:\d+)(?=\s*ml)                     # Matches numbers followed by "ml"
+            """, 
+            re.IGNORECASE | re.VERBOSE
+        )
         with Image.open(image_data) as img:
             img_np = np.array(img)
             img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
@@ -50,7 +58,8 @@ def extract_mileage(image_url):
         match = mileage_pattern.search(full_text)
         if match:
             status = True
-            mileage = match.group()  # Extract the matched text
+            mileage = match.group(0)  # Extract the matched text
+            mileage = re.sub(r'\s*(mi|ml|miles)\b', '', mileage, flags=re.IGNORECASE).strip()
             detail = "successfully extracted pattern"
 
         return status, mileage, detail
