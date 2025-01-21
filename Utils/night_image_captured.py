@@ -9,7 +9,7 @@ import cv2
 import re
 
 
-def is_night_captured_image(image_url,threshold=100):
+def is_night_captured_image(image_url,threshold=40):
     try:
         response = requests.get(image_url)
     except:
