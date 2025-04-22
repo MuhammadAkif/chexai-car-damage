@@ -110,7 +110,7 @@ def body_parts_segmentation(img, img_type):
         "side_body": {"status": False, "cropped": []}
     }
     right_side_rule = {
-        "silde_door": {"status": False, "cropped": []},
+        "side_door": {"status": False, "cropped": []},
         "fender": {"status": False, "cropped": []},
         "door_windshield": {"status": False, "cropped": []},
         "front_tire": {"status": False, "cropped": []},
@@ -120,6 +120,62 @@ def body_parts_segmentation(img, img_type):
         "side_body": {"status": False, "cropped": []}
     }
     back_rule = {
+        "back": {"status": False, "cropped": []},
+        "back_light": {"status": False, "count": 0, "cropped": []},
+    }
+    front_left_rule = {
+        "bumper": {"status": False, "cropped": []},
+        "hood": {"status": False, "cropped": []},
+        "windshield": {"status": False, "cropped": []},
+        "grill": {"status": False, "cropped": []},
+        "headlight": {"status": False, "count": 0, "cropped": []},
+        "roof": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "count": 0, "cropped": []},
+        "fender": {"status": False, "count": 0, "cropped": []},
+        "door_windshield": {"status": False, "cropped": []},
+        "front_tire": {"status": False, "cropped": []},
+        "back_tire": {"status": False, "cropped": []},
+        "door": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "cropped": []},
+        "side_body": {"status": False, "cropped": []}
+    }
+    front_right_rule = {
+        "bumper": {"status": False, "cropped": []},
+        "hood": {"status": False, "cropped": []},
+        "windshield": {"status": False, "cropped": []},
+        "grill": {"status": False, "cropped": []},
+        "headlight": {"status": False, "count": 0, "cropped": []},
+        "roof": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "count": 0, "cropped": []},
+        "fender": {"status": False, "count": 0, "cropped": []},
+        "door_windshield": {"status": False, "cropped": []},
+        "front_tire": {"status": False, "cropped": []},
+        "back_tire": {"status": False, "cropped": []},
+        "door": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "cropped": []},
+        "side_body": {"status": False, "cropped": []}
+    }
+    rear_right_rule = {
+        "side_door": {"status": False, "cropped": []},
+        "fender": {"status": False, "cropped": []},
+        "door_windshield": {"status": False, "cropped": []},
+        "front_tire": {"status": False, "cropped": []},
+        "back_tire": {"status": False, "cropped": []},
+        "door": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "cropped": []},
+        "side_body": {"status": False, "cropped": []},
+        "back": {"status": False, "cropped": []},
+        "back_light": {"status": False, "count": 0, "cropped": []},
+    }
+    rear_left_rule = {
+        "side_door": {"status": False, "cropped": []},
+        "fender": {"status": False, "cropped": []},
+        "door_windshield": {"status": False, "cropped": []},
+        "front_tire": {"status": False, "cropped": []},
+        "back_tire": {"status": False, "cropped": []},
+        "door": {"status": False, "cropped": []},
+        "side_mirro": {"status": False, "cropped": []},
+        "side_body": {"status": False, "cropped": []},
         "back": {"status": False, "cropped": []},
         "back_light": {"status": False, "count": 0, "cropped": []},
     }
@@ -160,34 +216,68 @@ def body_parts_segmentation(img, img_type):
                          if hasattr(body_parts_seg_model, "names")
                          else f"part_{class_id}")
             rule_dict = None
-            if img_type == "front" and part_name in front_rule:
+
+            # Determine which rule set to apply
+            if img_type == "exterior_front" and part_name in front_rule:
                 rule_dict = front_rule
                 if part_name in ["headlight", "side_mirro"]:
                     rule_dict[part_name]["count"] += 1
-            elif img_type == "left_side" and part_name in left_side_rule:
+            elif img_type == "exterior_driver_side" and part_name in left_side_rule:
                 rule_dict = left_side_rule
-            elif img_type == "right_side" and part_name in right_side_rule:
+            elif img_type == "exterior_passenger_side" and part_name in right_side_rule:
                 rule_dict = right_side_rule
-            elif img_type == "back" and part_name in back_rule:
+            elif img_type == "exterior_rear" and part_name in back_rule:
                 rule_dict = back_rule
                 if part_name in ["back_light"]:
                     rule_dict[part_name]["count"] += 1
+            elif img_type in ["front_driver_side_corner","front_left_corner"] and part_name in front_left_rule:
+                rule_dict = front_left_rule
+                if part_name in ["headlight", "side_mirro", "fender"]:
+                    if "count" in rule_dict[part_name]:
+                        rule_dict[part_name]["count"] += 1
+            elif img_type in ["front_right_corner", "front_passenger_side_corner"] and part_name in front_right_rule:
+                rule_dict = front_right_rule
+                if part_name in ["headlight", "side_mirro", "fender"]:
+                    if "count" in rule_dict[part_name]:
+                        rule_dict[part_name]["count"] += 1
+            elif img_type in ["rear_driver_side_corner", "rear_left_corner"] and part_name in rear_left_rule:
+                rule_dict = rear_left_rule
+                if part_name in ["back_light"]:
+                    if "count" in rule_dict[part_name]:
+                        rule_dict[part_name]["count"] += 1
+            elif img_type in ["rear_right_corner", "rear_passenger_side_corner"] and part_name in rear_right_rule:
+                rule_dict = rear_right_rule
+                if part_name in ["back_light"]:
+                    if "count" in rule_dict[part_name]:
+                        rule_dict[part_name]["count"] += 1
+
             if rule_dict is not None:
                 rule_dict[part_name]["status"] = True
                 rule_dict[part_name]["cropped"].append((cropped_obj, (x_min, y_min, x_max, y_max)))
+
         def finalize_rule(rule):
             for key, value in rule.items():
                 if not value["cropped"]:
                     value["cropped"] = None
             return rule
-        if img_type == "front":
+
+        # Return the appropriate rule set
+        if img_type == "exterior_front":
             return finalize_rule(front_rule)
-        elif img_type == "back":
+        elif img_type == "exterior_rear":
             return finalize_rule(back_rule)
-        elif img_type == "left_side":
+        elif img_type == "exterior_driver_side":
             return finalize_rule(left_side_rule)
-        elif img_type == "right_side":
+        elif img_type == "exterior_passenger_side":
             return finalize_rule(right_side_rule)
+        elif img_type in ["front_driver_side_corner","front_left_corner"]:
+            return finalize_rule(front_left_rule)
+        elif img_type in ["front_right_corner", "front_passenger_side_corner"]:
+            return finalize_rule(front_right_rule)
+        elif img_type in ["rear_driver_side_corner", "rear_left_corner"]:
+            return finalize_rule(rear_left_rule)
+        elif img_type in ["rear_right_corner", "rear_passenger_side_corner"]:
+            return finalize_rule(rear_right_rule)
     else:
         return None
 
