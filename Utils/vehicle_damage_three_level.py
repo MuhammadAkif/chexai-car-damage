@@ -360,7 +360,7 @@ def damage_segmentation(img, part_key=None, save_path=None):
                 candidate_index += 1
             color = damage_class_colors[base_label]
             dynamic_font_scale = 0.5 + 1.0 * ratio  
-            final_label = f"{base_label} ({severity})"
+            final_label = f"{base_label}"
             cv2.rectangle(result_img, (x_min, y_min), (x_max, y_max), color, thickness)
             (text_w, text_h), _ = cv2.getTextSize(final_label, font, dynamic_font_scale, thickness)
             text_bg_y = max(y_min - text_h - 4, 0)
