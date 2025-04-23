@@ -161,64 +161,8 @@ async def damage_detection(input: InputCarDamage, api_token: str = Depends(get_a
         raise HTTPException(status_code=500, detail="An error occurred during damage detection")
 
 
-
-# @router.post("/damage-detection3/")
-# async def damage_detection3(input: InputCarDamage, api_token: str = Depends(get_api_token)):
-#     dir_name = "s3_files/"
-#     s3_url = input.s3_url
-#     extension = input.extension
-#     file_name = random_name_generator()
-
-#     try:
-#         if s3_file_downloader(s3_url, file_name + extension):
-#             processed_file_path = None
-#             uploaded_s3_link = None
-#             message = ""
-#             # Run the full damage detection pipeline
-#             annotated_image, report = full_damage_detection(dir_name, file_name, extension, input.img_type)
-#             # cv2.imwrite("processed_image.jpg", annotated_image)
-            
-#             if processed_file_path is not None:
-#                 uploaded_s3_link = upload_file(processed_file_path, file_name, extension)
-#             else:
-#                 message = "Vehicle Not detected" if not message else message
-#                 uploaded_s3_link = s3_url  # fallback to original S3 URL if processing did not occur
-
-#             if os.path.exists(dir_name + file_name + extension):
-#                 os.remove(dir_name + file_name + extension)
-#             if processed_file_path and os.path.exists(processed_file_path):
-#                 os.remove(processed_file_path)
-            
-#             final_status = report.get("final_status", "pass")
-#             response = {
-#                 "image_s3_link": s3_url,
-#                 "processed_img_s3_link": uploaded_s3_link or s3_url,
-#                 "extension": extension,
-#                 "message": report.get("message", ""),
-#                 "final_status": final_status,
-#                 "org_img_info": report.get("org_img_info", {}),
-#                 "damages": report.get("damages", []),
-#                 "missing_body_parts": report.get("missing_body_parts", [])
-#             }
-#             # Use FastAPI's jsonable_encoder with custom_encoder to convert any numpy types
-#             response = jsonable_encoder(
-#                 response,
-#                 custom_encoder={
-#                     np.int64: int,
-#                     np.int32: int,
-#                     np.float64: float,
-#                     np.float32: float
-#                 }
-#             )
-#             return JSONResponse(content=response)
-#         else:
-#             raise HTTPException(status_code=400, detail="Failed to download file from S3")
-#     except Exception as e:
-#         print(f"Error in damage detection: {str(e)}")
-#         raise HTTPException(status_code=500, detail="An error occurred during damage detection")
-
 @router.post("/damage-detection3/")
-async def damage_detection3(input: InputCarDamage, api_token: str = Depends(get_api_token)):
+async def damage_detection3(input: InputCarDamage2, api_token: str = Depends(get_api_token)):
     dir_name = "s3_files/"
     s3_url = input.s3_url
     extension = input.extension

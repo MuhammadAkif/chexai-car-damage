@@ -8,6 +8,10 @@ class InputLicencePlate(BaseModel):
 class InputCarDamage(BaseModel):
     s3_url:str
     extension:str
+
+class InputCarDamage2(BaseModel):
+    s3_url:str
+    extension:str
     img_type: str
 
 class InputNightImage(BaseModel):
