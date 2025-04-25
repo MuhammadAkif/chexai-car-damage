@@ -7,6 +7,7 @@ from models.common import DetectMultiBackend
 from utils.general import (non_max_suppression, scale_boxes)
 from utils.segment.general import process_mask
 from utils.torch_utils import select_device
+from utils.augmentations import letterbox
 
 
 # --- Global configuration and model loading ---
@@ -15,8 +16,8 @@ body_part_weights = "AiModels/vehicle_body_part_segmentation.pt"
 damage_detection_weights = "AiModels/3rd_level_best_model.pt"
 data = 'data/coco.yaml'
 imgsz = (640, 640)                             
-conf_thres = 0.60
-iou_thres = 0.35
+conf_thres = 0.35
+iou_thres = 0.45
 max_det = 1000
 device = select_device('')                         # use CPU or GPU if available
 
@@ -28,6 +29,7 @@ body_parts_seg_model = DetectMultiBackend(body_part_weights, device=device, dnn=
 body_parts_seg_model.warmup(imgsz=(1 if body_parts_seg_model.pt else 1, 3, *imgsz))
 
 damage_seg_model = DetectMultiBackend(damage_detection_weights, device=device, dnn=False, data=data, fp16=False)
+damage_stride, damage_names, damage_pt = damage_seg_model.stride, damage_seg_model.names, damage_seg_model.pt
 damage_seg_model.warmup(imgsz=(1 if damage_seg_model.pt else 1, 3, *imgsz))
 
 print(body_parts_seg_model.names)
@@ -107,7 +109,8 @@ def body_parts_segmentation(img, img_type):
         "back_tire": {"status": False, "cropped": []},
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
-        "side_body": {"status": False, "cropped": []}
+        "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []}
     }
     right_side_rule = {
         "side_door": {"status": False, "cropped": []},
@@ -117,7 +120,8 @@ def body_parts_segmentation(img, img_type):
         "back_tire": {"status": False, "cropped": []},
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
-        "side_body": {"status": False, "cropped": []}
+        "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []}
     }
     back_rule = {
         "back": {"status": False, "cropped": []},
@@ -137,7 +141,8 @@ def body_parts_segmentation(img, img_type):
         "back_tire": {"status": False, "cropped": []},
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
-        "side_body": {"status": False, "cropped": []}
+        "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []}
     }
     front_right_rule = {
         "bumper": {"status": False, "cropped": []},
@@ -153,7 +158,8 @@ def body_parts_segmentation(img, img_type):
         "back_tire": {"status": False, "cropped": []},
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
-        "side_body": {"status": False, "cropped": []}
+        "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []}
     }
     rear_right_rule = {
         "side_door": {"status": False, "cropped": []},
@@ -164,6 +170,7 @@ def body_parts_segmentation(img, img_type):
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
         "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []},
         "back": {"status": False, "cropped": []},
         "back_light": {"status": False, "count": 0, "cropped": []},
     }
@@ -176,6 +183,7 @@ def body_parts_segmentation(img, img_type):
         "door": {"status": False, "cropped": []},
         "side_mirro": {"status": False, "cropped": []},
         "side_body": {"status": False, "cropped": []},
+        "slide_door": {"status": False, "cropped": []},
         "back": {"status": False, "cropped": []},
         "back_light": {"status": False, "count": 0, "cropped": []},
     }
@@ -190,7 +198,7 @@ def body_parts_segmentation(img, img_type):
 
     with torch.no_grad():
         pred, proto = body_parts_seg_model(im_tensor, augment=False)[:2]
-        pred = non_max_suppression(pred, 0.8, iou_thres,
+        pred = non_max_suppression(pred, 0.5, iou_thres,
                                    classes=None, agnostic=False, max_det=max_det, nm=32)
 
     if len(pred[0]) > 0:
@@ -294,12 +302,16 @@ def damage_segmentation(img, part_key=None, save_path=None):
     Returns the damage-overlay image and a list of damage detection info.
     """
     original = img.copy()
-    im_resized = cv2.resize(img, imgsz)
+    im_resized = letterbox(original, imgsz, stride=damage_stride, auto=damage_pt)[0]
+    # Convert
+    im_resized = im_resized.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
+    im_resized = np.ascontiguousarray(im_resized)
     im_tensor = torch.from_numpy(im_resized).to(damage_seg_model.device)
     im_tensor = im_tensor.half() if damage_seg_model.fp16 else im_tensor.float()
     im_tensor /= 255.0
-    if im_tensor.ndim == 3:
-        im_tensor = im_tensor.permute(2, 0, 1).unsqueeze(0)
+    im_tensor = im_tensor.unsqueeze(0)
+    # if im_tensor.ndim == 3:
+    #     im_tensor = im_tensor.permute(2, 0, 1).unsqueeze(0)
     with torch.no_grad():
         pred, proto = damage_seg_model(im_tensor, augment=False)[:2]
         # Adjust threshold if needed (here 0.15)
@@ -321,6 +333,7 @@ def damage_segmentation(img, part_key=None, save_path=None):
     damage_class_colors = {}
     candidate_index = 0
     crop_h, crop_w = img.shape[:2]
+
     if len(pred[0]) > 0:
         masks = process_mask(proto[-1][0], pred[0][:, 6:], pred[0][:, :4],
                              im_tensor.shape[2:], upsample=True)
@@ -414,7 +427,7 @@ def full_damage_detection(dir_name, file_name, extension, img_type):
     thickness = 1
     small_font_scale = 0.3
     font = cv2.FONT_HERSHEY_SIMPLEX
-    ignore_parts = ["front_tire", "back_tire", "side_mirro", "headlight", "back_light", "windshield", "door_windshield"]
+    ignore_parts = ["front_tire", "back_tire", "side_mirro", "headlight", "back_light", "windshield", "door_windshield","grill"]
     if body_parts is not None:
         for part, info in body_parts.items():
             body_parts_status[part] = info["status"]
