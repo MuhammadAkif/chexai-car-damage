@@ -480,7 +480,7 @@ def full_damage_detection(dir_name, file_name, extension, img_type):
     message = f"{total_damages} damage(s) detected." if total_damages else "No damage detected."
     report = {
         "image_s3_link": None,  # to be set in endpoint
-        "processed_img_s3_link": None,  # to be set in endpoint
+        "processed_img_s3_link": None,  # to be set in endpoin
         "extension": extension,
         "message": message,
         "final_status": final_status,
