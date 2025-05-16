@@ -467,6 +467,7 @@ def full_damage_detection(dir_name, file_name, extension, img_type):
                             "height": final_y_max - final_y_min,
                             "label": det["label"],
                             "severity": det["severity"],
+                            "damage_location":part,
                             "byAI": True,
                             "deleted": False,
                             "accuracyMatrix": {"tp": 1, "fp": 0, "fn": 0}
