@@ -416,7 +416,7 @@ def full_damage_detection(dir_name, file_name, extension, img_type):
     # Step 1: Vehicle segmentation
     veh_img, veh_status, veh_bbox = vehicle_segmentation(original_img)
     if not veh_status:
-        return original_img, {"error": "Vehicle segmentation failed."}
+        return original_img, {"error": "Vehicle segmentation failed.","org_img_info":original_img_info}
     # Step 2: Body-part segmentation on the vehicle crop
     body_parts = body_parts_segmentation(veh_img, img_type)
     annotated_img = original_img.copy()
